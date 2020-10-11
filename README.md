@@ -7,7 +7,7 @@
 ** 导出文件库目录为HTML格式，以树形结构展示，可以用浏览器直接打开 也可以搜索节点名称。  **
 
 
-![Pandao editor.md](https://pandao.github.io/editor.md/images/logos/editormd-logo-180x180.png "zTree树")
+![](https://github.com/Lusttime/DuDiskMenExport/blob/main/ztree.png "zTree树")
 
 #### 目前存在的问题 ：
 
@@ -20,4 +20,4 @@
 点击添加新脚本 ==> 跳转到编辑器页面 ==> 清空里面代码 ==> 复制DuDiskMenExport.js里面的代码到编辑器 ==> 保存。
 
 打开百度云盘分享的文件库页面，此时会多出一个按钮。
-![Pandao editor.md](https://pandao.github.io/editor.md/images/logos/editormd-logo-180x180.png "导出页面")
+![](https://github.com/Lusttime/DuDiskMenExport/blob/main/exp.png "导出页面")
