@@ -7,7 +7,7 @@
 导出文件库目录为HTML格式，以树形结构展示，可以用浏览器直接打开 也可以搜索节点名称。
 
 
-![image](https://github.com/Lusttime/DuDiskMenExport/blob/main/ztree.png)
+![image](https://github.com/Lusttime/DuDiskMenExport/blob/main/tree.png)
 
 #### 目前存在的问题 ：
 
