@@ -29,27 +29,35 @@
         alert('请耐心等待不要关闭当前页面');
         tags.forEach(function (item) {
             const gid = item.getAttribute('data-gid');
+            const to_uk = item.getAttribute('data-to');
             const from_uk = item.getAttribute('data-frm');
             const msg_id = item.getAttribute('data-id');
             const fs_id = item.getAttribute('data-fid');
-            if (gid === null) {
-                const error_msg = '目前只支持在最上级目录导出！';
+            if (msg_id === null) {
+                const error_msg = '导出失败,只支持在最上级目录导出！';
                 alert(error_msg);
                 throw Error(error_msg);
             }
             let params = {
-                'gid': gid,
                 'msg_id': msg_id,
                 'from_uk': from_uk,
                 'fs_id': fs_id,
-                'type': 2
+            }
+            if (to_uk === null) {
+                params.gid = gid;
+                params.type = 2;
+            } else {
+                params.to_uk = to_uk;
+                params.type = 1;
             }
             const top_tag_name = $(item).find('span[class="global-ellipsis sharelist-item-title-name"]').find('a').html();
+            //生成UUID
+            const s_t_pid = uuid();
             let select_top_tag = {};
-            select_top_tag.id = fs_id;
+            select_top_tag.id = s_t_pid;
             select_top_tag.pId = 233;
             select_top_tag.name = top_tag_name;
-            const result = get_child_tags([select_top_tag], params, fs_id);
+            const result = get_child_tags([select_top_tag], params, s_t_pid);
             data_list = data_list.concat(result);
         });
         const data = JSON.stringify(data_list);
@@ -62,16 +70,17 @@
         const json = get(lower_url, params);
         const infos = parseData(json);
         infos.forEach(function (item) {
+            const node_id = uuid();
             let node = {};
-            node.id = item.fs_id;
+            node.id = node_id;
             node.pId = pId;
             node.name = item.file_name;
             empty.push(node);
             if (item.is_dir === 1) {
                 params.fs_id = item.fs_id;
-                get_child_tags(empty, params, item.fs_id);
+                get_child_tags(empty, params, node_id);
             } else {
-                empty.filter(x => x.id === item.fs_id)[0].name = item.file_name + '[' + covert_size(item.file_size) + ']';
+                empty.filter(x => x.id === node_id)[0].name = item.file_name + '[' + covert_size(item.file_size) + ']';
             }
         });
         return empty;
@@ -108,7 +117,7 @@
                 }
             },
             error: function (error) {
-                alert('error:' + error);
+                console.log('error:' + error);
             }
         });
         return result;
@@ -197,6 +206,19 @@
         } else {
             return Math.round(s / (1073741824) * 100) / 100.00 + " GB";
         }
+    }
+
+    //生成唯一UUID
+    function uuid(){
+        let str = '0123456789abcdef'
+        let arr = []
+        for(let i = 0; i < 36; i++){
+          arr.push(str.substr(Math.floor(Math.random() * 0x10), 1))
+        }
+        arr[14] = 4;
+        arr[19] = str.substr(arr[19] & 0x3 | 0x8, 1)
+        arr[8] = arr[13] = arr[18] = arr[23] = '-'
+        return arr.join('')
     }
 
     //添加导出按钮
