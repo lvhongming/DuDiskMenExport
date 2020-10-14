@@ -14,6 +14,8 @@
     'use strict';
 
     const lower_url = 'https://pan.baidu.com/mbox/msg/shareinfo';
+    let list_counter = 0;
+    let file_counter = 0;
 
     function start() {
         let lis = Array.from(document.getElementsByTagName('li')).filter(item => item.getAttribute('node-type') === 'sharelist-item');
@@ -23,11 +25,11 @@
         let top_tag = {};
         top_tag.id = 233;
         top_tag.pId = 0;
-        top_tag.name = 'allFiles'
+        top_tag.name = '目录清单'
         let data_list = [top_tag];
-        alert('全部目录导出时间可能过长,建议选中单个导出..');
-        alert('请耐心等待不要关闭当前页面');
-        tags.forEach(function (item) {
+        alert('全部目录导出时间可能过长,建议选中单个导出!');
+        alert('按F12选择"控制台"可查看脚本运行状态.');
+        tags.forEach(item => {
             const gid = item.getAttribute('data-gid');
             const to_uk = item.getAttribute('data-to');
             const from_uk = item.getAttribute('data-frm');
@@ -60,16 +62,21 @@
             const result = get_child_tags([select_top_tag], params, s_t_pid);
             data_list = data_list.concat(result);
         });
+        console.log(`执行完毕 共读取${list_counter}个子目录 ${file_counter}个文件.`);
+        list_counter = 0;
+        file_counter = 0;
         const data = JSON.stringify(data_list);
         const blob = new Blob([to_html(data)], {type: "text/plain;charset=utf-8"});
-        saveAs(blob, 'menu.html');
+        saveAs(blob, '目录清单-' + dateFormat('yyyyMMddHHmmSS', new Date()) + '.html');
     }
 
     //递归获取下级目录
     function get_child_tags(empty, params, pId) {
         const json = get(lower_url, params);
         const infos = parseData(json);
-        infos.forEach(function (item) {
+        let pNode = empty.filter(x => x.id === pId)[0];
+        pNode.name = pNode.name + ` [子文件/夹:${infos.length}]`;
+        infos.forEach(item => {
             const node_id = uuid();
             let node = {};
             node.id = node_id;
@@ -77,10 +84,13 @@
             node.name = item.file_name;
             empty.push(node);
             if (item.is_dir === 1) {
+                list_counter++;
+                console.log(`正在读取第${list_counter}个子目录.`);
                 params.fs_id = item.fs_id;
                 get_child_tags(empty, params, node_id);
             } else {
-                empty.filter(x => x.id === node_id)[0].name = item.file_name + '[' + covert_size(item.file_size) + ']';
+                file_counter++;
+                empty.filter(x => x.id === node_id)[0].name = item.file_name + ` [${covert_size(item.file_size)}]`;
             }
         });
         return empty;
@@ -90,7 +100,7 @@
     function parseData(json) {
         let infos = [];
         const records = json.records;
-        records.forEach(function (item) {
+        records.forEach(item => {
             let info = {};
             info.is_dir = item.isdir;
             info.file_name = item.server_filename;
@@ -188,11 +198,9 @@
 
     //Html反转义
     function html_decode(text) {
-        var temp = document.createElement("html");
+        let temp = document.createElement("html");
         temp.innerHTML = text;
-        var output = temp.innerText || temp.textContent;
-        temp = null;
-        return output;
+        return temp.innerText || temp.textContent;
     }
 
     //转换显示文件大小
@@ -209,16 +217,35 @@
     }
 
     //生成唯一UUID
-    function uuid(){
+    function uuid() {
         let str = '0123456789abcdef'
         let arr = []
-        for(let i = 0; i < 36; i++){
-          arr.push(str.substr(Math.floor(Math.random() * 0x10), 1))
+        for (let i = 0; i < 36; i++) {
+            arr.push(str.substr(Math.floor(Math.random() * 0x10), 1))
         }
         arr[14] = 4;
         arr[19] = str.substr(arr[19] & 0x3 | 0x8, 1)
         arr[8] = arr[13] = arr[18] = arr[23] = '-'
         return arr.join('')
+    }
+
+    //格式化时间
+    function dateFormat(fmt, date) {
+        const opt = {
+            "y+": date.getFullYear().toString(),
+            "M+": (date.getMonth() + 1).toString(),
+            "d+": date.getDate().toString(),
+            "H+": date.getHours().toString(),
+            "m+": date.getMinutes().toString(),
+            "S+": date.getSeconds().toString()
+        }
+        for (let k in opt) {
+            let ret = new RegExp("(" + k + ")").exec(fmt);
+            if (ret) {
+                fmt = fmt.replace(ret[1], (ret[1].length === 1) ? (opt[k]) : (opt[k].padStart(ret[1].length, "0")))
+            }
+        }
+        return fmt;
     }
 
     //添加导出按钮
