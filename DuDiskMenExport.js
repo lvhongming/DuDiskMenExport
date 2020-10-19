@@ -28,7 +28,8 @@
         top_tag.name = '目录清单'
         let data_list = [top_tag];
         alert('全部目录导出时间可能过长,建议选中单个导出!');
-        alert('按F12选择"控制台"可查看脚本运行状态.');
+        list_counter = 0;
+        file_counter = 0;
         tags.forEach(item => {
             const gid = item.getAttribute('data-gid');
             const to_uk = item.getAttribute('data-to');
@@ -41,6 +42,8 @@
                 throw Error(error_msg);
             }
             let params = {
+                'page': 1,
+                'num': 100,
                 'msg_id': msg_id,
                 'from_uk': from_uk,
                 'fs_id': fs_id,
@@ -60,20 +63,17 @@
             select_top_tag.pId = 233;
             select_top_tag.name = top_tag_name;
             const result = get_child_tags([select_top_tag], params, s_t_pid);
-            data_list = data_list.concat(result);
+            data_list.push.apply(data_list, result);
         });
         console.log(`执行完毕 共读取${list_counter}个子目录 ${file_counter}个文件.`);
-        list_counter = 0;
-        file_counter = 0;
         const data = JSON.stringify(data_list);
-        const blob = new Blob([to_html(data)], {type: "text/plain;charset=utf-8"});
+        const blob = new Blob([to_html(data)], { type: "text/plain;charset=utf-8" });
         saveAs(blob, '目录清单-' + dateFormat('yyyyMMddHHmmSS', new Date()) + '.html');
     }
 
     //递归获取下级目录
     function get_child_tags(empty, params, pId) {
-        const json = get(lower_url, params);
-        const infos = parseData(json);
+        const infos = all_infos(params, []);
         let pNode = empty.filter(x => x.id === pId)[0];
         pNode.name = pNode.name + ` [子文件/夹:${infos.length}]`;
         infos.forEach(item => {
@@ -96,8 +96,21 @@
         return empty;
     }
 
+    //分页获取所有数据
+    function all_infos(params, infos) {
+        let json = get(lower_url, params);
+        const datas = parse_data(json);
+        infos.push.apply(infos, datas);
+        if (datas.length === params.num) {
+            params.page++;
+            all_infos(params, infos);
+        }
+        params.page = 1;
+        return infos;
+    }
+
     //解析结果
-    function parseData(json) {
+    function parse_data(json) {
         let infos = [];
         const records = json.records;
         records.forEach(item => {
@@ -127,7 +140,7 @@
                 }
             },
             error: function (error) {
-                console.log('error:' + error);
+                alert('运行出错(网络请求失败) 请尝试重新导出');
             }
         });
         return result;
